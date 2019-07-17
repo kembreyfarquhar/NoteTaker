@@ -4,6 +4,25 @@ const db = require("../dbconfig");
 
 const router = express.Router();
 
+router.post("/", (req, res) => {
+  const note = req.body;
+
+  if (!note.title) {
+    return res.status(400).json({ message: "must include title" });
+  }
+
+  db("notes")
+    .insert(note)
+    .then(ids => {
+      const id = ids[0];
+
+      res.status(201).json(id);
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+
 router.get("/", (req, res) => {
   db("notes")
     .then(notes => {
@@ -41,19 +60,15 @@ router.delete("/:id", validateId, (req, res) => {
     });
 });
 
-router.post("/", (req, res) => {
-  const note = req.body;
-
-  if (!note.title) {
-    return res.status(400).json({ message: "must include title" });
-  }
+router.put("/:id", validateId, (req, res) => {
+  const { id } = req.params;
+  const changes = req.body;
 
   db("notes")
-    .insert(note)
-    .then(ids => {
-      const id = ids[0];
-
-      res.status(201).json(id);
+    .where({ id })
+    .update(changes)
+    .then(updated => {
+      res.status(200).json({ message: "note updated" });
     })
     .catch(error => {
       res.status(500).json(error);

@@ -4,6 +4,27 @@ const db = require("../dbconfig");
 
 const router = express.Router();
 
+router.post("/", (req, res) => {
+  const user = req.body;
+
+  if (!user.username || !user.password) {
+    return res
+      .status(400)
+      .json({ message: "Must provide both username and password" });
+  }
+
+  db("users")
+    .insert(user)
+    .then(ids => {
+      const id = ids[0];
+
+      res.status(201).json(id);
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+
 router.get("/", (req, res) => {
   db("users")
     .then(users => {
@@ -34,7 +55,6 @@ router.delete("/:id", validateId, (req, res) => {
     .where({ id })
     .delete()
     .then(deleted => {
-      console.log(deleted);
       res.status(200).json({ message: `user with id ${id} was deleted` });
     })
     .catch(error => {
@@ -42,21 +62,15 @@ router.delete("/:id", validateId, (req, res) => {
     });
 });
 
-router.post("/", (req, res) => {
-  const user = req.body;
-
-  if (!user.username || !user.password) {
-    return res
-      .status(400)
-      .json({ message: "Must provide both username and password" });
-  }
+router.put("/:id", validateId, (req, res) => {
+  const { id } = req.params;
+  const changes = req.body;
 
   db("users")
-    .insert(user)
-    .then(ids => {
-      const id = ids[0];
-
-      res.status(201).json(id);
+    .where({ id })
+    .update(changes)
+    .then(updated => {
+      res.status(200).json({ message: "user updated" });
     })
     .catch(error => {
       res.status(500).json(error);
